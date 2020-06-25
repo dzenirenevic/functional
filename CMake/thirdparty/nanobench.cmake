@@ -1,28 +1,21 @@
 set(proj_name nanobench)
 
-get_property(${proj_name}_included GLOBAL PROPERTY ${proj_name}_included SET)
-if (${proj_name}_included)
-    unset(proj_name)
-    return()
-endif ()
-
-set_property(GLOBAL PROPERTY ${proj_name}_included)
-
-include(fetch_content)
+include(add_external_project)
 include(thirdparty_common)
 
-fetch_content(
-    ${proj_name}_proj
+add_external_project(
+    ${proj_name}
     GIT_REPOSITORY https://github.com/martinus/nanobench.git
     GIT_TAG c534992696b9341274c6714931d0064d74239fcb
     GIT_SHALLOW true
     PREFIX "${thirdparty_prefix}/${proj_name}"
     SOURCE_DIR "${thirdparty_prefix}/${proj_name}/source"
-    BINARY_DIR "${thirdparty_binary_dir}/${proj_name}/bin")
+    BINARY_DIR "${thirdparty_binary_dir}/${proj_name}/bin"
+    SKIP_ADD_SUBDIR)
 
 add_library(nanobench OBJECT ${CMAKE_CURRENT_LIST_DIR}/nanobench_impl.cpp)
 target_compile_options(nanobench PUBLIC $<$<CXX_COMPILER_ID:MSVC>:/wd4267>)
-target_include_directories(nanobench PUBLIC ${${proj_name}_proj_SOURCE_DIR}/src/include)
+target_include_directories(nanobench PUBLIC ${${proj_name}_SOURCE_DIR}/src/include)
 
 unset(proj_name)
 
