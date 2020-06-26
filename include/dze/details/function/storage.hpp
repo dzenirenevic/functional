@@ -11,7 +11,6 @@
 
 namespace dze::details::function_ns {
 
-// This class is only available on little endian systems.
 // Size must be greater than or equal to sizeof(alloc_details).
 template <size_t Size, size_t Align, typename Alloc>
 class storage : private Alloc
