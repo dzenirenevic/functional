@@ -191,7 +191,10 @@ public:
     template <typename Signature2 = Signature,
         DZE_REQUIRES(is_movable_v<Signature2>)>
     function& operator=(function<Signature2, Alloc>&& other)
-        noexcept(noexcept(this->m_storage.resize(0, 0)))
+        noexcept(
+            std::allocator_traits<Alloc>::propagate_on_container_move_assignment::value ||
+            std::allocator_traits<Alloc>::is_always_equal::value ||
+            noexcept(this->m_storage.resize(0, 0)))
     {
         using alloc_traits = std::allocator_traits<Alloc>;
 
@@ -250,7 +253,7 @@ public:
 
     // Undefined behavior if std::allocator_traits<Alloc>::propagate_on_container_swap == false
     // and both allocators do not compare equal.
-    void swap(function& other) noexcept(noexcept(this->m_storage.resize(0, 0)))
+    void swap(function& other) noexcept(noexcept(swap_helper(*this, other)))
     {
         using alloc_traits = std::allocator_traits<Alloc>;
 
@@ -383,7 +386,10 @@ private:
     [[nodiscard]] void* data_addr() noexcept { return m_storage.data(); }
 
     static void swap_helper(function& lhs, function& rhs)
-        noexcept(noexcept(lhs.m_storage.resize(0, 0)))
+        noexcept(
+            std::allocator_traits<Alloc>::propagate_on_container_swap::value ||
+            std::allocator_traits<Alloc>::is_always_equal::value ||
+            noexcept(lhs.m_storage.resize(0, 0)))
     {
         using alloc_traits = std::allocator_traits<Alloc>;
 
