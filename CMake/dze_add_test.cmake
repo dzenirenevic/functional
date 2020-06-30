@@ -8,17 +8,18 @@ endif ()
 
 set_property(GLOBAL PROPERTY ${proj_name}_included)
 
-include(fetch_content)
+include(add_external_project)
 include(thirdparty_common)
 
-fetch_content(
-    ${proj_name}_proj
+add_external_project(
+    ${proj_name}
     GIT_REPOSITORY https://github.com/dzenirenevic/dze_add_test
     GIT_TAG 287f7127016b3160c9e80ce6e2f77bb57f20f981
     GIT_SHALLOW true
     PREFIX "${thirdparty_prefix}/${proj_name}"
-    SOURCE_DIR "${thirdparty_prefix}/${proj_name}/source")
+    SOURCE_DIR "${thirdparty_prefix}/${proj_name}/source"
+    SKIP_ADD_SUBDIR)
 
-include(${${proj_name}_proj_SOURCE_DIR}/${proj_name}.cmake)
+include(${${proj_name}_SOURCE_DIR}/${proj_name}.cmake)
 
 unset(proj_name)
