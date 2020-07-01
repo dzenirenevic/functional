@@ -8,6 +8,8 @@
 #include <nanobench.h>
 
 #include <dze/function.hpp>
+#include <dze/noupstream_buffer_allocator.hpp>
+#include <dze/pmr/memory_resource.hpp>
 
 #include "objects.hpp"
 
@@ -214,16 +216,16 @@ int main()
 
     {
         std::aligned_storage_t<sizeof(large_obj), alignof(large_obj)> buf;
-        dze::monotonic_buffer_resource mr{&buf, sizeof(buf)};
+        dze::noupstream_buffer_allocator alloc{&buf, sizeof(buf)};
 
         ankerl::nanobench::Rng rng{0};
-        std::vector<dze::function<int&(size_t), dze::monotonic_buffer_resource>> v;
+        std::vector<dze::function<int&(size_t), dze::noupstream_buffer_allocator>> v;
         v.reserve(epochs * iterations);
         for (size_t i = 0; i != v.capacity(); ++i)
-            v.emplace_back(mr);
+            v.emplace_back(alloc);
         auto it = v.begin();
         bench.epochs(epochs).epochIterations(iterations).run(
-            "dze::function with monotonic_buffer_resource",
+            "dze::function with noupstream_buffer_allocator",
             [&]
             {
                 auto& f = *it++ = get_function_object(x, nums);
@@ -246,21 +248,21 @@ int main()
 
     {
         std::aligned_storage_t<sizeof(large_obj), alignof(large_obj)> buf;
-        std::pmr::monotonic_buffer_resource mr{&buf, sizeof(buf), std::pmr::null_memory_resource()};
+        dze::pmr::noupstream_buffer_resource resource{&buf, sizeof(buf)};
 
         ankerl::nanobench::Rng rng{0};
         std::vector<dze::pmr::function<int&(size_t)>> v;
         v.reserve(epochs * iterations);
         for (size_t i = 0; i != v.capacity(); ++i)
-            v.emplace_back(&mr);
+            v.emplace_back(&resource);
         auto it = v.begin();
         bench.epochs(epochs).epochIterations(iterations).run(
-            "dze::pmr::function with monotonic_buffer_resource",
+            "dze::pmr::function with noupstream_buffer_resource",
             [&]
             {
                 auto& f = *it++ = get_function_object(x, nums);
                 ankerl::nanobench::doNotOptimizeAway(f(rng.bounded(nums.size())));
-                mr.release();
+                resource.release();
             });
     }
 }

@@ -6,7 +6,7 @@
 #include <utility>
 
 #include <dze/allocator.hpp>
-#include <dze/memory_resource.hpp>
+#include <dze/pmr/memory_resource.hpp>
 #include <dze/type_traits.hpp>
 
 #include "details/function/delegate.hpp"

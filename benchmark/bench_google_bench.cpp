@@ -9,6 +9,8 @@
 #include <benchmark/benchmark.h>
 
 #include <dze/function.hpp>
+#include <dze/noupstream_buffer_allocator.hpp>
+#include <dze/pmr/memory_resource.hpp>
 
 #include "objects.hpp"
 
@@ -217,19 +219,19 @@ void large_fobj_dze_function(benchmark::State& state)
     }
 }
 
-void large_fobj_dze_function_with_monotonic_buffer_resource(benchmark::State& state)
+void large_fobj_dze_function_with_noupstream_buffer_allocator(benchmark::State& state)
 {
     std::array<int, 64> nums;
     std::mt19937 rng;
     std::generate(nums.begin(), nums.end(), rng);
 
     std::aligned_storage_t<sizeof(large_obj), alignof(large_obj)> buf;
-    dze::monotonic_buffer_resource mr{&buf, sizeof(buf)};
+    dze::noupstream_buffer_allocator alloc{&buf, sizeof(buf)};
 
-    std::vector<dze::function<int&(size_t), dze::monotonic_buffer_resource>> v;
+    std::vector<dze::function<int&(size_t), dze::noupstream_buffer_allocator>> v;
     v.reserve(iterations);
     for (size_t i = 0; i != v.capacity(); ++i)
-        v.emplace_back(mr);
+        v.emplace_back(alloc);
     auto it = v.begin();
 
     for ([[maybe_unused]] auto _ : state)
@@ -255,26 +257,26 @@ void large_fobj_dze_pmr_function(benchmark::State& state)
     }
 }
 
-void large_fobj_dze_pmr_function_with_monotonic_buffer_resource(benchmark::State& state)
+void large_fobj_dze_pmr_function_with_noupstream_buffer_resource(benchmark::State& state)
 {
     std::array<int, 64> nums;
     std::mt19937 rng;
     std::generate(nums.begin(), nums.end(), rng);
 
     std::aligned_storage_t<sizeof(large_obj), alignof(large_obj)> buf;
-    std::pmr::monotonic_buffer_resource mr{&buf, sizeof(buf), std::pmr::null_memory_resource()};
+    dze::pmr::noupstream_buffer_resource resource{&buf, sizeof(buf)};
 
     std::vector<dze::pmr::function<int&(size_t)>> v;
     v.reserve(iterations);
     for (size_t i = 0; i != v.capacity(); ++i)
-        v.emplace_back(&mr);
+        v.emplace_back(&resource);
     auto it = v.begin();
 
     for ([[maybe_unused]] auto _ : state)
     {
         auto& f = *it++ = get_function_object(x, nums);
         benchmark::DoNotOptimize(f(rng() % nums.size()));
-        mr.release();
+        resource.release();
     }
 }
 
@@ -296,8 +298,8 @@ BENCHMARK(large_fobj_inline)->Iterations(iterations);
 BENCHMARK(large_fobj_direct_call)->Iterations(iterations);
 BENCHMARK(large_fobj_std_function)->Iterations(iterations);
 BENCHMARK(large_fobj_dze_function)->Iterations(iterations);
-BENCHMARK(large_fobj_dze_function_with_monotonic_buffer_resource)->Iterations(iterations);
+BENCHMARK(large_fobj_dze_function_with_noupstream_buffer_allocator)->Iterations(iterations);
 BENCHMARK(large_fobj_dze_pmr_function)->Iterations(iterations);
-BENCHMARK(large_fobj_dze_pmr_function_with_monotonic_buffer_resource)->Iterations(iterations);
+BENCHMARK(large_fobj_dze_pmr_function_with_noupstream_buffer_resource)->Iterations(iterations);
 
 BENCHMARK_MAIN();
